@@ -157,15 +157,6 @@ int main( void )
 	Display_Net_Conf(); // Print out the network information
 #endif
 
-#if 0
-	wiz_NetTimeout gtimeout, stimeout;
-	stimeout.retry_cnt = 8;
-	stimeout.time_100us = 2000;
-	wizchip_settimeout(&stimeout);
-	wizchip_gettimeout(&gtimeout);
-	//printf("gtimeout.retry_cnt:%d time_100us:%d\r\n", gtimeout.retry_cnt, gtimeout.time_100us);
-#endif
-
 	g_flag = 0;
 
 	while ( 1 )
