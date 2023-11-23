@@ -10,6 +10,16 @@ cd WiringPi
 
 ./build
 
+
+
+## /* Enable the SPI Module */
+
+sudo raspi-config
+
+"Interfacing Options" -> "SPI"
+
+
+
 ## /* get w5500 loopback source */
 
 git clone https://github.com/Wiznet-OpenHardware/RPi-w5500.git
