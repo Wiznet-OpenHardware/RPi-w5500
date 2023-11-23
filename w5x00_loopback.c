@@ -47,7 +47,7 @@
 
 //* SPI Channel *//
 #define CHANNEL		0
-
+#define SPEED		8000000
 /**
  * ----------------------------------------------------------------------------------------------------
  * Variables
@@ -113,7 +113,7 @@ int main( void )
 
 	//* SPI init *//
 	pinMode(CS, OUTPUT);
-	fd = wiringPiSPISetup(CHANNEL, 8000000);
+	fd = wiringPiSPISetup(CHANNEL, SPEED);
 	//printf( "fd:%d\n", fd);
 
 	//* W5500 Init *//
@@ -148,7 +148,7 @@ int main( void )
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
 
 	printf("\r\n=======================================\r\n");
-	printf(" WIZnet RPi device%s -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
+	printf(" WIZnet RPi device [%s] -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
 	printf("=======================================\r\n");
 	printf(">> W5500 chip based Loopback\r\n");
 	printf("=======================================\r\n");
@@ -163,8 +163,8 @@ int main( void )
 	{
 		/* Loopback Test: TCP Server and UDP */
 		{
-			loopback_tcps(SOCK_TCPS, gDATABUF, PORT_TCPS);
-			//loopback_udps(SOCK_UDPS, gDATABUF, PORT_UDPS);
+			echoback_ret = loopback_tcps(SOCK_TCPS, gDATABUF, PORT_TCPS);
+			//echoback_ret = loopback_udps(SOCK_UDPS, gDATABUF, PORT_UDPS);
 			//echoback_ret = loopback_tcpc(SOCK_TCPS, gDATABUF, destip, destport);
 
 			//if(echoback_ret < 0) printf("echoback ret: %ld\r\n", echoback_ret); // TCP Socket Error code
@@ -200,7 +200,7 @@ static uint8_t wizchip_read(void)
 	uint8_t rb;
 	
 	ret = wiringPiSPIDataRW(CHANNEL, &rb, 1);
-	// printf("SPI read:0x%02x\r\n", rb);
+	// printf("<<SPI read:0x%02x\r\n", rb);
 	// printf("read ret : %d\r\n", ret);
 
 	return rb;
@@ -208,7 +208,7 @@ static uint8_t wizchip_read(void)
 
 static void wizchip_write(uint8_t wb)
 {
-	//printf("SPI write before:0x%02x\r\n", wb);
+	//printf(">>SPI write before:0x%02x\r\n", wb);
 	ret = wiringPiSPIDataRW(CHANNEL, &wb, 1);
 	// printf("read ret : %d\r\n", ret);
 }
