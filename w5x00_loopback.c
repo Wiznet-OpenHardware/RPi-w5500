@@ -148,9 +148,9 @@ int main( void )
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
 
 	printf("\r\n=======================================\r\n");
-	printf(" WIZnet %s -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
+	printf(" WIZnet RPi device%s -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
 	printf("=======================================\r\n");
-	printf(">> W5500 based Loopback\r\n");
+	printf(">> W5500 chip based Loopback\r\n");
 	printf("=======================================\r\n");
 	printf("Ethernet Chip version 0x%02x", chip_ver); 
 
@@ -224,13 +224,13 @@ static void wizchip_write(uint8_t wb)
 
 static void Net_Conf(wiz_NetInfo netinfo)
 {
-#if 0
+#ifdef _MAIN_DEBUG_
 	/*set nNetwork Information */
-	printf("\r\nMAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n", netinfo.mac[0], netinfo.mac[1], netinfo.mac[2], netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
-	printf("IP: %d.%d.%d.%d\r\n", netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
-	printf("GW: %d.%d.%d.%d\r\n", netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
-	printf("SN: %d.%d.%d.%d\r\n", netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
-	printf("DNS: %d.%d.%d.%d\r\n", netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
+	printf("\r\n[DEBUG]MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n", netinfo.mac[0], netinfo.mac[1], netinfo.mac[2], netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
+	printf("[DEBUG]IP: %d.%d.%d.%d\r\n", netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
+	printf("[DEBUG]GW: %d.%d.%d.%d\r\n", netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
+	printf("[DEBUG]SN: %d.%d.%d.%d\r\n", netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
+	printf("[DEBUG]DNS: %d.%d.%d.%d\r\n", netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
 #endif
 	ctlnetwork(CN_SET_NETINFO, (void*) &netinfo);
 }
