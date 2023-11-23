@@ -26,6 +26,8 @@ git clone https://github.com/Wiznet-OpenHardware/RPi-w5500.git
 
 cd RPi-w5500
 
+
+
 ## /* build & run */
 
 make
