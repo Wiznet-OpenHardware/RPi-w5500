@@ -43,10 +43,11 @@
 #define RDY		1
 #define CS		10
 #define RST		5
+#define PWR		6
 
 //* SPI Channel *//
 #define CHANNEL		0
-#define SPEED		8000000
+#define SPEED		10 * 1000 * 1000 //10Mhz
 /**
  * ----------------------------------------------------------------------------------------------------
  * Variables
@@ -83,6 +84,9 @@ static void wizchip_select(void);
 static void wizchip_deselect(void);
 static uint8_t wizchip_read(void);
 static void wizchip_write(uint8_t wb);
+
+static void wizchip_check(void);
+static void wizchip_initialize(void);
 static void Net_Conf(wiz_NetInfo netinfo);
 static void Display_Net_Conf();
 
@@ -94,52 +98,33 @@ static void Display_Net_Conf();
 int main( void )
 {
 	int fd;
-	uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2}, {2,2,2,2,2,2,2,2}};
 	uint8_t tmp;
 	int32_t echoback_ret;
-	uint8_t chip_ver;
 
 	printf( "\r\nRaspberry Pi wiringPi SPI test program\r\n" );
-	
+
+	//* WiringPi set *//
 	if ( wiringPiSetup() == -1 )
 	{
 		printf("Not wiringPi setup");
 		exit( 1 );
 	}
-
-	//* W5500 reset *//
-	wizchip_reset();
-
 	//* SPI init *//
 	pinMode(CS, OUTPUT);
 	fd = wiringPiSPISetup(CHANNEL, SPEED);
 	//printf( "fd:%d\n", fd);
 
-	//* W5500 Init *//
-	reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
-	reg_wizchip_spi_cbfunc(wizchip_read, wizchip_write);
+	//* W5500 reset *//
+	wizchip_reset();
 
-	if(ctlwizchip(CW_INIT_WIZCHIP, (void*) memsize) == -1)
-	{
-		printf("WIZCHIP Initialized fail.\r\n");
-		while(1);
-	}
+	//* Ethernet chip Initialize *//
+	wizchip_initialize();
 
-	do
-	{
-		if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
-		{
-			printf("Unknown PHY Link status.\r\n");
-			return 0;
-		}
-	} while (tmp == PHY_LINK_OFF);
+	//* Ethernet chip version check *//
+	wizchip_check();
 
-	//* Network init */
+	//* Network init *//
 	Net_Conf(gWIZNETINFO);
-
-	//* Ethernet chip version check*//
-	chip_ver = getVERSIONR();
-	printf("Ethernet Chip version 0x%02x", chip_ver); 
 
 #ifdef _MAIN_DEBUG_
 	uint8_t tmpstr[6] = {0,};
@@ -151,7 +136,6 @@ int main( void )
 	printf("=======================================\r\n");
 	printf(">> W5500 chip based Loopback\r\n");
 	printf("=======================================\r\n");
-	printf("Ethernet Chip version 0x%02x", chip_ver); 
 
 	Display_Net_Conf(); // Print out the network information
 #endif
@@ -166,14 +150,17 @@ int main( void )
 			//echoback_ret = loopback_udps(SOCK_UDPS, gDATABUF, PORT_UDPS);
 			//echoback_ret = loopback_tcpc(SOCK_TCPS, gDATABUF, destip, destport);
 
-			//if(echoback_ret < 0) printf("echoback ret: %ld\r\n", echoback_ret); // TCP Socket Error code
+			//if(echoback_ret < 0)
+			{
+				printf("echoback ret: %ld\r\n", echoback_ret); // TCP Socket Error code
+			}
 		}
 	}
  
 	return(0);
 }
 
-void wizchip_reset(void)
+static void wizchip_reset(void)
 {
 	pinMode(RST, OUTPUT);
 	digitalWrite(RST, 0);
@@ -199,7 +186,7 @@ static uint8_t wizchip_read(void)
 	uint8_t rb;
 	
 	ret = wiringPiSPIDataRW(CHANNEL, &rb, 1);
-	// printf("<<SPI read:0x%02x\r\n", rb);
+	printf("<<SPI read:0x%02x\r\n", rb);
 	// printf("read ret : %d\r\n", ret);
 
 	return rb;
@@ -207,9 +194,46 @@ static uint8_t wizchip_read(void)
 
 static void wizchip_write(uint8_t wb)
 {
-	//printf(">>SPI write before:0x%02x\r\n", wb);
+	printf(">>SPI write before:0x%02x\r\n", wb);
 	ret = wiringPiSPIDataRW(CHANNEL, &wb, 1);
 	// printf("read ret : %d\r\n", ret);
+}
+
+static void wizchip_check(void)
+{
+	if (getVERSIONR() != 0x04)	printf(" ACCESS ERR : VERSION != 0x04, read value = 0x%02x\n", getVERSIONR());
+}
+
+static void wizchip_initialize(void)
+{
+	uint8_t tmp;
+	uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2}, {2,2,2,2,2,2,2,2}};
+
+    /* Deselect the FLASH : chip select high */
+    wizchip_deselect();
+
+    /* CS function register */
+    reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
+
+    /* SPI function register */
+    reg_wizchip_spi_cbfunc(wizchip_read, wizchip_write);
+
+	if(ctlwizchip(CW_INIT_WIZCHIP, (void*) memsize) == -1)
+	{
+		printf("WIZCHIP Initialized fail.\r\n");
+		while(1);
+
+	}
+/*
+	do
+	{
+		if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
+		{
+			printf("Unknown PHY Link status.\r\n");
+			return 0;
+		}
+	} while (tmp == PHY_LINK_OFF);
+*/
 }
 
 static void Net_Conf(wiz_NetInfo netinfo)
