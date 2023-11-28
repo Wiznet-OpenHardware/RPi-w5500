@@ -43,7 +43,6 @@
 #define RDY		1
 #define CS		10
 #define RST		5
-#define PWR		6
 
 //* SPI Channel *//
 #define CHANNEL		0
