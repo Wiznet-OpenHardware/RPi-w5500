@@ -41,12 +41,12 @@
 
 
 #define RDY		1
-#define CS		10
+#define CS		6	
 #define RST		5
 
 //* SPI Channel *//
 #define CHANNEL		0
-#define SPEED		10 * 1000 * 1000 //10Mhz
+#define SPEED		1000 * 1000 //1Mhz
 /**
  * ----------------------------------------------------------------------------------------------------
  * Variables
@@ -149,7 +149,7 @@ int main( void )
 			//echoback_ret = loopback_udps(SOCK_UDPS, gDATABUF, PORT_UDPS);
 			//echoback_ret = loopback_tcpc(SOCK_TCPS, gDATABUF, destip, destport);
 
-			//if(echoback_ret < 0)
+			if(echoback_ret < 0)
 			{
 				printf("echoback ret: %ld\r\n", echoback_ret); // TCP Socket Error code
 			}
@@ -185,7 +185,7 @@ static uint8_t wizchip_read(void)
 	uint8_t rb;
 	
 	ret = wiringPiSPIDataRW(CHANNEL, &rb, 1);
-	printf("<<SPI read:0x%02x\r\n", rb);
+	//printf("<<SPI read:0x%02x\r\n", rb);
 	// printf("read ret : %d\r\n", ret);
 
 	return rb;
@@ -193,7 +193,7 @@ static uint8_t wizchip_read(void)
 
 static void wizchip_write(uint8_t wb)
 {
-	printf(">>SPI write before:0x%02x\r\n", wb);
+	//printf(">>SPI write before:0x%02x\r\n", wb);
 	ret = wiringPiSPIDataRW(CHANNEL, &wb, 1);
 	// printf("read ret : %d\r\n", ret);
 }
@@ -216,6 +216,9 @@ static void wizchip_initialize(void)
 
     /* SPI function register */
     reg_wizchip_spi_cbfunc(wizchip_read, wizchip_write);
+
+	//* Ethernet chip version check *//
+	wizchip_check();
 
 	if(ctlwizchip(CW_INIT_WIZCHIP, (void*) memsize) == -1)
 	{
