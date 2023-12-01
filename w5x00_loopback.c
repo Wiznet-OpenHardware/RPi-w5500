@@ -39,14 +39,14 @@
 #define PORT_TCPS		5100
 #define PORT_UDPS       5200
 
-
-#define RDY		1
-#define CS		6	
-#define RST		5
+#define CS		3
+#define RST		5	
+#define INT		6
 
 //* SPI Channel *//
 #define CHANNEL		0
-#define SPEED		1000 * 1000 //1Mhz
+#define SPEED		10 * 1000 * 1000 //10Mhz
+
 /**
  * ----------------------------------------------------------------------------------------------------
  * Variables
@@ -54,7 +54,6 @@
  */
 //*  Buffer Definition for LOOPBACK *//
 uint8_t gDATABUF[DATA_BUF_SIZE];
-
 
 //* Network Configuration *//
 wiz_NetInfo gWIZNETINFO = { .mac = {0x00, 0x08, 0xdc, 0x12, 0x34, 0x56},
@@ -64,13 +63,12 @@ wiz_NetInfo gWIZNETINFO = { .mac = {0x00, 0x08, 0xdc, 0x12, 0x34, 0x56},
 			    .dns = {8, 8, 8, 8},
 			    .dhcp = NETINFO_STATIC };
 
-//* For TCP client echechok examples; destination network info *//
+//* For TCP client examples; destination network info *//
 uint8_t destip[4] = {192, 168, 11, 74};
 uint16_t destport = 5000;
 
 /* global value */
 uint8_t ret;
-unsigned char buffer[100];
 uint8_t g_flag;
 
 /**
@@ -99,8 +97,9 @@ int main( void )
 	int fd;
 	uint8_t tmp;
 	int32_t echoback_ret;
+	uint8_t ver_reg;
 
-	printf( "\r\nRaspberry Pi wiringPi SPI test program\r\n" );
+	printf( "\r\nRaspberry Pi - W5x00 Loopback TEST\r\n" );
 
 	//* WiringPi set *//
 	if ( wiringPiSetup() == -1 )
@@ -131,9 +130,8 @@ int main( void )
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
 
 	printf("\r\n=======================================\r\n");
-	printf(" WIZnet RPi device [%s] -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
-	printf("=======================================\r\n");
-	printf(">> W5500 chip based Loopback\r\n");
+	printf(" WIZnet RPi [%s] -- ver %d.%.2d\r\n", tmpstr, VER_H, VER_L);
+	printf(" %s Ethernet Loopback\r\n", tmpstr);
 	printf("=======================================\r\n");
 
 	Display_Net_Conf(); // Print out the network information
@@ -186,7 +184,6 @@ static uint8_t wizchip_read(void)
 	
 	ret = wiringPiSPIDataRW(CHANNEL, &rb, 1);
 	//printf("<<SPI read:0x%02x\r\n", rb);
-	// printf("read ret : %d\r\n", ret);
 
 	return rb;
 }
@@ -195,7 +192,6 @@ static void wizchip_write(uint8_t wb)
 {
 	//printf(">>SPI write before:0x%02x\r\n", wb);
 	ret = wiringPiSPIDataRW(CHANNEL, &wb, 1);
-	// printf("read ret : %d\r\n", ret);
 }
 
 static void wizchip_check(void)
@@ -224,30 +220,27 @@ static void wizchip_initialize(void)
 	{
 		printf("WIZCHIP Initialized fail.\r\n");
 		while(1);
-
 	}
-/*
+
 	do
 	{
 		if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1)
 		{
 			printf("Unknown PHY Link status.\r\n");
-			return 0;
 		}
 	} while (tmp == PHY_LINK_OFF);
-*/
+
 }
 
 static void Net_Conf(wiz_NetInfo netinfo)
 {
-#ifdef _MAIN_DEBUG_
 	/*set nNetwork Information */
-	printf("\r\n[DEBUG]MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n", netinfo.mac[0], netinfo.mac[1], netinfo.mac[2], netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
-	printf("[DEBUG]IP: %d.%d.%d.%d\r\n", netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
-	printf("[DEBUG]GW: %d.%d.%d.%d\r\n", netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
-	printf("[DEBUG]SN: %d.%d.%d.%d\r\n", netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
-	printf("[DEBUG]DNS: %d.%d.%d.%d\r\n", netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
-#endif
+	// printf("\r\n[DEBUG]MAC	: %02X:%02X:%02X:%02X:%02X:%02X\r\n", netinfo.mac[0], netinfo.mac[1], netinfo.mac[2], netinfo.mac[3], netinfo.mac[4], netinfo.mac[5]);
+	// printf("[DEBUG]IP		: %d.%d.%d.%d\r\n", netinfo.ip[0], netinfo.ip[1], netinfo.ip[2], netinfo.ip[3]);
+	// printf("[DEBUG]GW		: %d.%d.%d.%d\r\n", netinfo.gw[0], netinfo.gw[1], netinfo.gw[2], netinfo.gw[3]);
+	// printf("[DEBUG]SN		: %d.%d.%d.%d\r\n", netinfo.sn[0], netinfo.sn[1], netinfo.sn[2], netinfo.sn[3]);
+	// printf("[DEBUG]DNS		: %d.%d.%d.%d\r\n", netinfo.dns[0], netinfo.dns[1], netinfo.dns[2], netinfo.dns[3]);
+
 	ctlnetwork(CN_SET_NETINFO, (void*) &netinfo);
 }
 
@@ -260,12 +253,21 @@ static void Display_Net_Conf()
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
 
 	//* Display Network Information *//
-	if(WIZNETINFO.dhcp == NETINFO_DHCP) printf("\r\n===== %s NET CONF : DHCP =====\r\n",(char*)tmpstr);
-		else printf("\r\n===== %s NET CONF : Static =====\r\n",(char*)tmpstr);
+	if(WIZNETINFO.dhcp == NETINFO_DHCP)
+	{
+		printf("=======================================\r\n");
+		printf("\r\n===== %s NETWORK CONF : DHCP =====\r\n",(char*)tmpstr);
+	} 
+	else
+	{
+		printf("=======================================\r\n");
+		printf("\r\n===== %s NET CONFWORK : Static =====\r\n",(char*)tmpstr);
+	} 
 
-	printf("\r\nMAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n", WIZNETINFO.mac[0], WIZNETINFO.mac[1], WIZNETINFO.mac[2], WIZNETINFO.mac[3], WIZNETINFO.mac[4], WIZNETINFO.mac[5]);
-	printf("IP: %d.%d.%d.%d\r\n", WIZNETINFO.ip[0], WIZNETINFO.ip[1], WIZNETINFO.ip[2], WIZNETINFO.ip[3]);
-	printf("GW: %d.%d.%d.%d\r\n", WIZNETINFO.gw[0], WIZNETINFO.gw[1], WIZNETINFO.gw[2], WIZNETINFO.gw[3]);
-	printf("SN: %d.%d.%d.%d\r\n", WIZNETINFO.sn[0], WIZNETINFO.sn[1], WIZNETINFO.sn[2], WIZNETINFO.sn[3]);
-	printf("DNS: %d.%d.%d.%d\r\n", WIZNETINFO.dns[0], WIZNETINFO.dns[1], WIZNETINFO.dns[2], WIZNETINFO.dns[3]);
+	printf("\r\nMAC		: %02X:%02X:%02X:%02X:%02X:%02X\r\n", WIZNETINFO.mac[0], WIZNETINFO.mac[1], WIZNETINFO.mac[2], WIZNETINFO.mac[3], WIZNETINFO.mac[4], WIZNETINFO.mac[5]);
+	printf("IP		: %d.%d.%d.%d\r\n", WIZNETINFO.ip[0], WIZNETINFO.ip[1], WIZNETINFO.ip[2], WIZNETINFO.ip[3]);
+	printf("GW		: %d.%d.%d.%d\r\n", WIZNETINFO.gw[0], WIZNETINFO.gw[1], WIZNETINFO.gw[2], WIZNETINFO.gw[3]);
+	printf("SN		: %d.%d.%d.%d\r\n", WIZNETINFO.sn[0], WIZNETINFO.sn[1], WIZNETINFO.sn[2], WIZNETINFO.sn[3]);
+	printf("DNS		: %d.%d.%d.%d\r\n", WIZNETINFO.dns[0], WIZNETINFO.dns[1], WIZNETINFO.dns[2], WIZNETINFO.dns[3]);
+	printf("=======================================\r\n");
 }
