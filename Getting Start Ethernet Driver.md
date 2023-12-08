@@ -1,6 +1,6 @@
 ## Hardware Connection
 
-
+![RPI_pin_1](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/RPI_pin_1.jpg)
 
 The Raspberry Pi GPIO used inside W5500 is as follows.
 
