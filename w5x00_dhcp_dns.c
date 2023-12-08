@@ -17,7 +17,9 @@
 #include <stdint.h>
 
 #include "wizchip_conf.h"
-#include "loopback.h"
+
+#include "dhcp.h"
+#include "dns.h"
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -27,17 +29,19 @@
 //* Debugging Message Printout enable *//
 #define _MAIN_DEBUG_
 
+#define DATA_BUF_SIZE			2048
+
 //* Demo Version *//
 #define VER_H		1
 #define VER_L		00
 
-//* Socket number definition for Examples *//
-#define SOCK_TCPS       0
-#define SOCK_UDPS       1
+/* Socket */
+#define SOCKET_DHCP 0
+#define SOCKET_DNS 1
 
-//* Port number definition for Examples *//
-#define PORT_TCPS		5100
-#define PORT_UDPS       5200
+/* Retry count */
+#define DHCP_RETRY_COUNT 5
+#define DNS_RETRY_COUNT 5
 
 #define CS		3
 #define RST		5	
@@ -61,11 +65,20 @@ wiz_NetInfo gWIZNETINFO = { .mac = {0x00, 0x08, 0xdc, 0x12, 0x34, 0x56},
 			    .sn = {255, 255, 255, 0},
 			    .gw = {192, 168, 11, 1},
 			    .dns = {8, 8, 8, 8},
-			    .dhcp = NETINFO_STATIC };
+			    .dhcp = NETINFO_DHCP };
 
-//* For TCP client examples; destination network info *//
-uint8_t destip[4] = {192, 168, 11, 74};
-uint16_t destport = 5000;
+/* DHCP */
+static uint8_t g_dhcp_get_ip_flag = 0;
+
+/* DNS */
+static uint8_t g_dns_target_domain[] = "www.wiznet.io";
+static uint8_t g_dns_target_ip[4] = {
+    0,
+};
+static uint8_t g_dns_get_ip_flag = 0;
+
+/* Timer */
+static volatile uint16_t g_msec_cnt = 0;
 
 /* global value */
 uint8_t ret;
@@ -87,6 +100,9 @@ static void wizchip_initialize(void);
 static void Net_Conf(wiz_NetInfo netinfo);
 static void Display_Net_Conf();
 
+static void wizchip_dhcp_init(void);
+static void wizchip_dhcp_assign(void);
+static void wizchip_dhcp_conflict(void);
 /**
  * ----------------------------------------------------------------------------------------------------
  * Main
@@ -96,10 +112,10 @@ int main( void )
 {
 	int fd;
 	uint8_t tmp;
-	int32_t echoback_ret;
-	uint8_t ver_reg;
+	uint8_t dhcp_retry = 0;
+    uint8_t dns_retry = 0;
 
-	printf( "\r\nRaspberry Pi - W5x00 Loopback\r\n" );
+	printf( "\r\nRaspberry Pi - W5x00 DHCP & DNS\r\n" );
 
 	//* WiringPi set *//
 	if ( wiringPiSetup() == -1 )
@@ -120,10 +136,6 @@ int main( void )
 
 	//* Ethernet chip version check *//
 	wizchip_check();
-
-	//* Network init *//
-	Net_Conf(gWIZNETINFO);
-
 #ifdef _MAIN_DEBUG_
 	uint8_t tmpstr[6] = {0,};
 
@@ -131,28 +143,99 @@ int main( void )
 
 	printf("\r\n=======================================\r\n");
 	printf(" WIZnet RPi [%s] -- ver %d.%.2d", tmpstr, VER_H, VER_L);
-	printf("\r\n=======================================\r\n");
+	printf("\r\n=======================================\r\n");		
 
-	Display_Net_Conf(); // Print out the network information
 #endif
 
-	g_flag = 0;
+	//* Network init *//
+	if (gWIZNETINFO.dhcp == NETINFO_DHCP) // DHCP
+    {
+        wizchip_dhcp_init();
+    }
+    else 
+    {
+        Net_Conf(gWIZNETINFO); // static
 
+		Display_Net_Conf(); // Print out the network information
+        /* Get network information */
+    }
+	DNS_init(SOCKET_DNS, gDATABUF);
+
+	g_flag = 0;
 	while ( 1 )
 	{
-		/* Loopback Test: TCP Server and UDP */
+		/* Assigned IP through DHCP */
+		if (gWIZNETINFO.dhcp == NETINFO_DHCP)
 		{
-			echoback_ret = loopback_tcps(SOCK_TCPS, gDATABUF, PORT_TCPS);
-			//echoback_ret = loopback_udps(SOCK_UDPS, gDATABUF, PORT_UDPS);
-			//echoback_ret = loopback_tcpc(SOCK_TCPS, gDATABUF, destip, destport);
+			g_flag = DHCP_run();
 
-			if(echoback_ret < 0)
-			{
-				printf("echoback ret: %ld\r\n", echoback_ret); // TCP Socket Error code
+            if (g_flag == DHCP_IP_LEASED)
+            {
+                if (g_dhcp_get_ip_flag == 0)
+                {
+                    printf(" DHCP success\n");
+
+                    g_dhcp_get_ip_flag = 1;
+                }
+            }
+            else if (g_flag == DHCP_FAILED)
+            {
+                g_dhcp_get_ip_flag = 0;
+                dhcp_retry++;
+
+                if (dhcp_retry <= DHCP_RETRY_COUNT)
+                {
+                    printf(" DHCP timeout occurred and retry %d\n", dhcp_retry);
+                }
+            }
+
+			if (dhcp_retry > DHCP_RETRY_COUNT)
+            {
+                printf(" DHCP failed\n");
+
+                DHCP_stop();
+
+                while (1)
+                    ;
+            }
+			delay(1000); // wait for 1 second
+		}
+
+		if ((g_dns_get_ip_flag == 0) && (g_flag == DHCP_IP_LEASED))
+		{
+			 while (1)
+            {
+                if (DNS_run(gWIZNETINFO.dns, g_dns_target_domain, g_dns_target_ip) > 0)
+                {
+                    printf(" DNS success\n");
+                    printf(" Target domain : %s\n", g_dns_target_domain);
+                    printf(" IP of target domain : %d.%d.%d.%d\n", g_dns_target_ip[0], g_dns_target_ip[1], g_dns_target_ip[2], g_dns_target_ip[3]);
+					printf("=======================================\r\n");
+
+                    g_dns_get_ip_flag = 1;
+
+                    break;
+                }
+				else
+				{
+					dns_retry++;
+
+					if (dns_retry <= DNS_RETRY_COUNT)
+					{
+						printf(" DNS timeout occurred and retry %d\n", dns_retry);
+					}
+				}
+				if (dns_retry > DNS_RETRY_COUNT)
+				{
+					printf(" DNS failed\n");
+
+					while (1)
+						;
+				}
+				delay(1000); // wait for 1 second
 			}
 		}
 	}
- 
 	return(0);
 }
 
@@ -254,7 +337,7 @@ static void Display_Net_Conf()
 	//* Display Network Information *//
 	if(WIZNETINFO.dhcp == NETINFO_DHCP)
 	{
-		printf("\r\n===== %s NETWORK CONF : DHCP =====\r\n",(char*)tmpstr);
+		printf("\r\n====== %s NETWORK CONF : DHCP ======\r\n",(char*)tmpstr);
 	} 
 	else
 	{
@@ -267,4 +350,37 @@ static void Display_Net_Conf()
 	printf("SN		: %d.%d.%d.%d\r\n", WIZNETINFO.sn[0], WIZNETINFO.sn[1], WIZNETINFO.sn[2], WIZNETINFO.sn[3]);
 	printf("DNS		: %d.%d.%d.%d\r\n", WIZNETINFO.dns[0], WIZNETINFO.dns[1], WIZNETINFO.dns[2], WIZNETINFO.dns[3]);
 	printf("=======================================\r\n");
+}
+
+/* DHCP */
+static void wizchip_dhcp_init(void)
+{
+    DHCP_init(SOCKET_DHCP, gDATABUF);
+
+    reg_dhcp_cbfunc(wizchip_dhcp_assign, wizchip_dhcp_assign, wizchip_dhcp_conflict);
+}
+
+static void wizchip_dhcp_assign(void)
+{
+    getIPfromDHCP(gWIZNETINFO.ip);
+    getGWfromDHCP(gWIZNETINFO.gw);
+    getSNfromDHCP(gWIZNETINFO.sn);
+    getDNSfromDHCP(gWIZNETINFO.dns);
+
+    gWIZNETINFO.dhcp = NETINFO_DHCP;
+
+    /* Network initialize */
+    Net_Conf(gWIZNETINFO); // apply from DHCP
+
+    Display_Net_Conf();
+    printf(" DHCP leased time : %ld seconds\n", getDHCPLeasetime());
+}
+
+static void wizchip_dhcp_conflict(void)
+{
+    printf(" Conflict IP from DHCP\n");
+
+    // halt or reset or any...
+    while (1)
+        ; // this example is halt.
 }

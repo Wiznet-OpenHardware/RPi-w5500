@@ -1,37 +1,4 @@
-## /* update */
+## RPi-w5500
 
-sudo apt-get update
+For a guide to **using network drivers**, see getting_started.md. For the **SPI Ethernet user guide**, please refer to the link below.
 
-## /* get WiringPi */
-
-git clone https://github.com/WiringPi/WiringPi.git
-
-cd WiringPi
-
-./build
-
-
-
-## /* Enable the SPI Module */
-
-sudo raspi-config
-
-"Interfacing Options" -> "SPI"
-
-
-
-## /* get w5500 loopback source */
-
-git clone https://github.com/Wiznet-OpenHardware/RPi-w5500.git
-
-cd RPi-w5500
-
-
-
-## /* build & run */
-
-make
-
-./w5x00_loopback
-
-make clean
