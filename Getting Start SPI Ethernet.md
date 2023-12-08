@@ -1,6 +1,6 @@
 ## Hardware Connection
 
-![RPI_pin](C:\Users\Louis\Downloads\img_all\RPI_pin.jpg)
+![RPI_pin](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPI_pin_2.jpg)
 
 The Raspberry Pi GPIO used inside W5500 is as follows.
 
@@ -23,7 +23,7 @@ Update the list of packages on the system with the following command.
 sudo apt-get update
 ```
 
-![apt update](C:\Users\Louis\Downloads\img_all\apt update.jpg)
+![apt update](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/apt%20update.jpg)
 
 
 
@@ -39,7 +39,7 @@ cd WiringPi
 ./build
 ```
 
-![WiringPI_build](C:\Users\Louis\Downloads\img_all\WiringPI_build.jpg)
+![WiringPI_build](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/WiringPI_build.jpg)
 
 First check that "wiringPi" is not already installed. In a terminal, run:
 
@@ -47,7 +47,7 @@ First check that "wiringPi" is not already installed. In a terminal, run:
 gpio -v
 ```
 
-![GPIO_version](C:\Users\Louis\Downloads\img_all\GPIO_version.jpg)
+![GPIO_version](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/GPIO_version.jpg)
 
 
 
@@ -59,11 +59,15 @@ Enter raspi-config in the terminal to open the serial port I2C (refer to the con
 sudo raspi-config
 ```
 
-![raspi-config](C:\Users\Louis\Downloads\img_all\raspi-config.jpg)
+![raspi-config](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/raspi-config.jpg)
+
+
 
 **"Interfacing Options" -> "SPI" enable**
 
-![RPi_SPI](C:\Users\Louis\Downloads\img_all\RPi_SPI.jpg)
+![RPi_SPI](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPi_SPI.jpg)
+
+
 
 Test that the SPI is enabled:
 
@@ -71,7 +75,9 @@ Test that the SPI is enabled:
 ls -l /dev/spidev*
 ```
 
-![spi_enable](C:\Users\Louis\Downloads\img_all\spi_enable.jpg)
+![spi_enable](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/spi_enable.jpg)
+
+
 
 ## get w5500 loopback source
 
@@ -93,7 +99,9 @@ cd RPi-w5500
 make
 ```
 
-![RPI_W5500_make](C:\Users\Louis\Downloads\img_all\RPI_W5500_make.jpg)
+![RPI_W5500_make](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPI_W5500_make.jpg)
+
+
 
 When you run the executable, you can run the **Loopback** code as shown below.
 
@@ -101,7 +109,9 @@ When you run the executable, you can run the **Loopback** code as shown below.
 ./w5x00_loopback
 ```
 
-![RPI_loopback_run](C:\Users\Louis\Downloads\img_all\RPI_loopback_run.jpg)
+![RPI_loopback_run](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPI_loopback_run.jpg)
+
+
 
 When you run the executable, you can run the **DHCP & DNS** code as shown below.
 
@@ -109,4 +119,4 @@ When you run the executable, you can run the **DHCP & DNS** code as shown below.
 ./w5x00_dhcp_dns
 ```
 
-![RPI_dhcpdns_run](C:\Users\Louis\Downloads\img_all\RPI_dhcpdns_run.jpg)
+![RPI_dhcpdns_run](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPI_dhcpdns_run.jpg)

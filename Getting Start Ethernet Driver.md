@@ -23,7 +23,7 @@ Update the list of packages on the system with the following command.
 sudo apt-get update
 ```
 
-![apt update](C:\Users\Louis\Downloads\img_all\apt update.jpg)
+![SPI_update](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/apt%20update.jpg)
 
 
 
@@ -35,7 +35,7 @@ Check the Raspberry Pi kernel version (works on **ver 5.2** and above)
 uname -r
 ```
 
-![WiringPI_build](C:\Users\Louis\Downloads\img_all\WiringPI_build.jpg)
+![WiringPI_build](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/OS_version.jpg)
 
 
 
@@ -49,7 +49,7 @@ wget https://raw.githubusercontent.com/raspberrypi/linux/rpi-5.10.y/arch/arm/boo
 
 
 
-Here's a look at the file contents. The MAC address can also be set in the dts file.
+Here's a look at the file contents. The MAC address can also be set in the **"w5500-overlay.dts"** file.
 
 - Target : SPI 0 
 - Interrupt : BCM 25
@@ -59,7 +59,7 @@ Here's a look at the file contents. The MAC address can also be set in the dts f
 vim w5500-overlay.dts
 ```
 
-![w5500_dts](C:\Users\Louis\Downloads\img_all\Driver\w5500_dts.jpg)
+![dts_modify](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/w5500_dts.jpg)
 
 
 
@@ -73,6 +73,8 @@ dtc -I dts -O dtb -o w5500-driver.dtbo w5500-overlay.dts
 sudo cp w5500-driver.dtbo /boot/overlays/
 ```
 
+![w5500_dtbo](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/w5500_dtbo.jpg)
+
 
 
 Open the **config.txt** file into the boot and add the following to it.
@@ -83,6 +85,8 @@ sudo vim /boot/config.txt
 (+add) dtoverlay=w5500-driver
 ```
 
+![add_w5500-driver](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/config_dtoverlay.jpg)
+
 
 
 **Reboot** to apply the settings.
@@ -91,11 +95,13 @@ sudo vim /boot/config.txt
 sudo reboot
 ```
 
+![reboot](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/RPI_reboot.jpg)
+
 
 
 After booting, you'll see that the network driver is enabled.
 
-![enable_eth1](C:\Users\Louis\Downloads\img_all\Driver\enable_eth1.jpg)
+![enable_eth1](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/enable_eth1.jpg)
 
 
 
@@ -117,5 +123,9 @@ static_routers=[ROUTER IP]
 static domain_name_servers=[DNS IP]
 static ip_address=[STATIC IP ADDRESS YOU WANT]/24
 ```
+
+![set_ip](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/Driver/dhcp_setting.jpg)
+
+
 
 **Save the file** and **reboot**.
