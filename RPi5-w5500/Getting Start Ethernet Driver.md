@@ -107,6 +107,12 @@ After booting, you'll see that the network driver is enabled.
 
 ## Static IP & DHCP setting
 
+To set up the network, we first install the "dhcpcd" file.
+
+```
+sudo apt install dhcpcd
+```
+
 Open **/etc/dhcpcd.conf** for editing vim
 
 ```

@@ -27,27 +27,15 @@ sudo apt-get update
 
 
 
-## Build WiringPi
+## Install gpiod
 
 **WiringPi** is **PRE-INSTALLED** with standard Raspbian systems. To update or install on a Raspbian-Lite system:
 
 ```
-git clone https://github.com/WiringPi/WiringPi.git
-
-cd WiringPi
-
-./build
+sudo apt-get install libgpiod2 libgpiod-dev
 ```
 
-![WiringPI_build](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/WiringPI_build.jpg)
-
-First check that "wiringPi" is not already installed. In a terminal, run:
-
-```
-gpio -v
-```
-
-![GPIO_version](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/GPIO_version.jpg)
+![gpiod_install](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/gpiod_install.jpg)
 
 
 
@@ -99,7 +87,7 @@ cd RPi-w5500
 make
 ```
 
-![RPI_W5500_make](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPI_W5500_make.jpg)
+![RPI5_W5500_make](https://github.com/Wiznet-OpenHardware/RPi-w5500/blob/main/images/SPI_ethernet/RPi5_make.jpg)
 
 
 
